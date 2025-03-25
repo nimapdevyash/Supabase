@@ -27,7 +27,7 @@ Deno.serve(async (req): Promise<any> => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
     );
 
-    const group_chat_channel = client.channel("group_chat", {
+    const group_chat_channel = client.channel("broadcast_channel", {
       config: {
         broadcast: {
           self: false,
