@@ -5,7 +5,7 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-Deno.serve(async (req) => {
+Deno.serve(async (req): Promise<any> => {
   try {
     const client = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -13,10 +13,11 @@ Deno.serve(async (req) => {
     );
 
     const group_chat_channel = client.channel("group_chat");
+    group_chat_channel.subscribe();
 
-    group_chat_channel.on("broadcast", { event: "*" }, (message) => {
-      console.log("message recieved : ", message);
-    }).subscribe();
+    group_chat_channel.on("broadcast", { event: "message" }, (payload) => {
+      console.log("message recieved : ", payload);
+    });
   } catch (error) {
     console.log(error);
     return new Response(
