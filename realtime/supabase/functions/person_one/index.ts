@@ -12,12 +12,12 @@ Deno.serve(async (req): Promise<any> => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
     );
 
-    const group_chat_channel = client.channel("group_chat");
-    group_chat_channel.subscribe();
+    const group_chat_channel = client.channel("presence_channel").subscribe();
 
-    group_chat_channel.on("broadcast", { event: "message" }, (payload) => {
-      console.log("message recieved : ", payload);
-    });
+    const { userStatus } = await req.json();
+
+    const res = await group_chat_channel.track(userStatus);
+    console.log("tracking user status : ", res);
   } catch (error) {
     console.log(error);
     return new Response(
