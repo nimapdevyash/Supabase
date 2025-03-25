@@ -9,15 +9,18 @@ import {
   RealtimeChannel,
 } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-function sendMessage(channel: RealtimeChannel, message: string): void {
-  channel.send({
+async function sendMessage(
+  channel: RealtimeChannel,
+  message: string,
+): Promise<any> {
+  return await channel.send({
     type: "broadcast",
     event: "message",
     payload: { message },
   });
 }
 
-Deno.serve(async (req): any => {
+Deno.serve(async (req): Promise<any> => {
   try {
     const client = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -41,7 +44,13 @@ Deno.serve(async (req): any => {
 
     const { message } = await req.json();
 
-    sendMessage(group_chat_channel, message);
+    await sendMessage(group_chat_channel, message);
+
+    return new Response(
+      JSON.stringify({
+        status: "success",
+      }),
+    );
   } catch (error) {
     console.log(error);
     return new Response(
