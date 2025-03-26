@@ -3,21 +3,52 @@
 // This enables autocomplete, go to definition, etc.
 
 // Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-
-console.log("Hello from Functions!")
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
-  }
+  try {
+    const client = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
+    // Parse FormData instead of JSON
+    const formData = await req.formData();
+    const bucketName = formData.get("bucketName") as string;
+    const folderPath = formData.get("folderPath") as string;
+    const overwrite = formData.get("overwrite") === "true"; // Convert string to boolean
+    const file = formData.get("file") as File; // Get file from request
+
+    if (!bucketName || !folderPath || !file) {
+      throw new Error(
+        "Missing required parameters (bucketName, folderPath, file)",
+      );
+    }
+
+    // Upload file to Supabase storage
+    const { data, error } = await client.storage.from(bucketName).upload(
+      `${folderPath}/${file.name}`,
+      file,
+      { upsert: overwrite },
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    return new Response(JSON.stringify({ status: "success", data }));
+  } catch (error: any) {
+    console.log("Upload Error:", error);
+
+    return new Response(
+      JSON.stringify({
+        status: "failed",
+        error: error?.message || error,
+      }),
+      { status: 500 },
+    );
+  }
+});
 
 /* To invoke locally:
 
